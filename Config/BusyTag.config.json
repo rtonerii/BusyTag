@@ -1,0 +1,10 @@
+{
+  "Port": "COM3",
+  "BaudRate": 1500000,
+  "DictatingImage": "Dictating-WisprFlow-240x280.png",
+  "DictatingLedPins": 127,
+  "DictatingLedHex": "00FFFF",
+  "Runtime": {
+    "LogRetentionDays": 14
+  }
+}
