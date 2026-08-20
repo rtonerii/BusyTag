@@ -1,5 +1,9 @@
 # BusyTag-WisprFlow-Automation
 
+<p align="center">
+  <img src="Images/Dictating-WisprFlow-GitHub-1280x640.png" alt="BusyTag Wispr Flow dictation automation" width="100%">
+</p>
+
 Open-source Windows automation that connects a Luxafor BusyTag display to Wispr Flow dictation through AutoHotkey, PowerShell, and the BusyTag command-line utility.
 
 ## Project story

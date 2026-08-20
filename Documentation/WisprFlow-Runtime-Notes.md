@@ -1,5 +1,9 @@
 # BusyTag + Wispr Flow runtime notes
 
+<p align="center">
+  <img src="../Images/Dictating-WisprFlow-240x280.png" alt="Wispr Flow dictation active" width="200">
+</p>
+
 This file documents the runtime sequence implemented by `Scripts/Runtime/BusyTag-WisprFlow.ahk` and `Scripts/Runtime/Set-BusyTagDictationState.ps1`. For installation, configuration, paths, and diagnostics, use the repository [README](../README.md).
 
 ## Hotkey coordination

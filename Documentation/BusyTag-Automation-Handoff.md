@@ -1,5 +1,9 @@
 # BusyTag-WisprFlow-Automation maintainer handoff
 
+<p align="center">
+  <img src="../Images/Maintenance-240x280.png" alt="BusyTag automation maintenance" width="200">
+</p>
+
 See the repository [README](../README.md) for installation, configuration, startup, diagnostics, layout, and safety guidance. This document records the project history and the design decisions that future maintenance should preserve.
 
 ## Project history
