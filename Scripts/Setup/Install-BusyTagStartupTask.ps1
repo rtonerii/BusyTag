@@ -3,7 +3,7 @@
 Name:           Install-BusyTagStartupTask.ps1
 Author:         Rick Toner (Rick@XferWorx.com)
 Create date:    08/17/2026
-Description:    Installs or removes the BusyTag logon scheduled task.
+Description:    Installs prerequisites and registers the BusyTag logon scheduled task.
 Version:        1.00.000
 Published:      
 Modified By:    Rick Toner
@@ -98,6 +98,55 @@ function Test-BusyTagInstallPrerequisites {
 
     Write-Host 'Installation prerequisites: present.' -ForegroundColor Green
     Write-BusyTagInstallLog 'Installation prerequisites validated.'
+}
+
+<#
+.SYNOPSIS
+    Installs missing AutoHotkey and .NET 8 prerequisites with winget.
+
+.DESCRIPTION
+    Makes the full BusyTag installation a one-stop setup for host components
+    that can be installed through the Windows package manager. PowerShell
+    itself is intentionally not installed or changed by this script.
+#>
+function Install-BusyTagPrerequisites {
+    $wingetCommand = Get-Command 'winget.exe' -ErrorAction SilentlyContinue
+    if ($null -eq $wingetCommand) {
+        throw 'winget is required to install missing AutoHotkey and .NET 8 prerequisites. Install App Installer from Microsoft, then run this installer again.'
+    }
+
+    $autoHotkeyPath = Join-Path $env:ProgramFiles 'AutoHotkey\v2\AutoHotkey64.exe'
+    if (-not (Test-Path -LiteralPath $autoHotkeyPath -PathType Leaf)) {
+        Write-Host 'AutoHotkey v2 was not found. Installing it with winget...'
+        Write-BusyTagInstallLog 'AutoHotkey v2 missing; starting winget installation.'
+        & $wingetCommand.Source install --id 'AutoHotkey.AutoHotkey' --exact --silent --accept-package-agreements --accept-source-agreements
+        if ($LASTEXITCODE -ne 0) {
+            throw "AutoHotkey installation failed through winget with exit code $LASTEXITCODE."
+        }
+    }
+
+    $dotnetCommand = Get-Command 'dotnet.exe' -ErrorAction SilentlyContinue
+    $hasDotNet8 = $false
+    if ($null -ne $dotnetCommand) {
+        $runtimeList = @(& $dotnetCommand.Source '--list-runtimes' 2>&1 | ForEach-Object { $_.ToString() }) -join [Environment]::NewLine
+        $hasDotNet8 = $runtimeList -match 'Microsoft\.NETCore\.App\s+8\.'
+    }
+
+    if (-not $hasDotNet8) {
+        Write-Host '.NET 8 runtime was not found. Installing it with winget...'
+        Write-BusyTagInstallLog '.NET 8 runtime missing; starting winget installation.'
+        & $wingetCommand.Source install --id 'Microsoft.DotNet.Runtime.8' --exact --silent --accept-package-agreements --accept-source-agreements
+        if ($LASTEXITCODE -ne 0) {
+            throw ".NET 8 runtime installation failed through winget with exit code $LASTEXITCODE."
+        }
+
+        $dotnetInstallPath = Join-Path $env:ProgramFiles 'dotnet'
+        if (Test-Path -LiteralPath (Join-Path $dotnetInstallPath 'dotnet.exe')) {
+            $env:Path = "$dotnetInstallPath;$env:Path"
+        }
+    }
+
+    Write-BusyTagInstallLog 'Automatic prerequisite installation checks completed.'
 }
 
 <#
@@ -380,6 +429,11 @@ if ($Uninstall) {
                 throw 'Administrator PowerShell is required. Close this window, start PowerShell with Run as administrator, and run Install-BusyTagStartupTask.ps1 again.'
             }
 
+            # 2026-08-20: Install supported host prerequisites before validating
+            # their paths, making the full installer a one-stop setup.
+            # Prior 2026-08-20 logic:
+            # Test-BusyTagInstallPrerequisites
+            Install-BusyTagPrerequisites
             Test-BusyTagInstallPrerequisites
             Set-BusyTagPowerShellHost
             Install-BusyTagCli

@@ -17,10 +17,18 @@ global BusyTagStatusFile := BusyTagLogDirectory "\BusyTagAutomation.status"
 global BusyTagPowerShellHostFile := EnvGet("LOCALAPPDATA") "\XferWorx\BusyTag-WisprFlow\Runtime\PowerShellHost.txt"
 ; 2026-08-20: Use the PowerShell host selected during installation.
 ; Prior 2026-08-20 logic:
-; global WindowsPowerShell := A_WinDir "\System32\WindowsPowerShell\v1.0\powershell.exe"
-global WindowsPowerShell := ResolveBusyTagPowerShellHost()
+global WindowsPowerShell := A_WinDir "\System32\WindowsPowerShell\v1.0\powershell.exe"
 
 DirCreate(BusyTagLogDirectory)
+try {
+    selectedHost := Trim(FileRead(BusyTagPowerShellHostFile))
+    if (selectedHost != "" && FileExist(selectedHost))
+        WindowsPowerShell := selectedHost
+} catch {
+    ; Retain the built-in Windows PowerShell fallback when the selection file
+    ; is unavailable or unreadable.
+    selectedHost := ""
+}
 WriteBusyTagRuntimeStatus("Running")
 SetDictationRequested(false)
 OnExit(ShutdownBusyTagRuntime)
@@ -78,22 +86,6 @@ RunBusyTagAction(action) {
     } catch as err {
         TrayTip("BusyTag automation", err.Message, 5)
     }
-}
-
-ResolveBusyTagPowerShellHost() {
-    global BusyTagPowerShellHostFile
-
-    try {
-        selectedHost := Trim(FileRead(BusyTagPowerShellHostFile, "UTF-8"))
-        if (selectedHost != "" && FileExist(selectedHost))
-            return selectedHost
-    }
-
-    fallbackHost := A_WinDir "\System32\WindowsPowerShell\v1.0\powershell.exe"
-    if FileExist(fallbackHost)
-        return fallbackHost
-
-    throw Error("No usable PowerShell host was found. Run the BusyTag installer first.")
 }
 
 ; Writes the final runtime state and attempts one last restoration when AHK exits.

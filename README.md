@@ -76,7 +76,7 @@ The scheduled-task XML is generated in memory by `Install-BusyTagStartupTask.ps1
 
 Good news: you do not need to manually download or place the BusyTag CLI. The installer downloads the official CLI package, validates it with the installed .NET 8 runtime, and keeps it in the current user's local application-data folder. It also creates or refreshes the `XferWorx\BusyTag-Automation` scheduled task and starts the user-local runtime from the project folder.
 
-The installer does not currently install Windows PowerShell, PowerShell Core, AutoHotkey, the .NET runtime, or Wispr Flow. Those are host/application prerequisites and must be installed or managed by the user's normal Windows software process. Windows PowerShell 5.1 is included with supported Windows versions and is the required baseline for the startup path.
+The installer does not install Windows PowerShell, PowerShell Core, or Wispr Flow. Windows PowerShell 5.1 or PowerShell Core must already be available so the installer can run. When `winget` is available, the full installer automatically installs missing AutoHotkey v2 and the .NET 8 runtime, then validates both before it creates the scheduled task. If `winget` is unavailable, the installer reports the missing prerequisite and provides a clear retry path.
 
 The scripts were syntax-checked and the read-only runtime diagnostic completed successfully under both Windows PowerShell 5.1 and PowerShell Core (tested with 7.6.5). During a full install, the installer records the executable that launched it. The scheduled and manual batch launchers and the AutoHotkey listener then use that selected host, so installing from PowerShell Core selects `pwsh.exe`, while installing from Windows PowerShell selects `powershell.exe`. PowerShell 4 is not the supported baseline for this project.
 
@@ -90,11 +90,11 @@ Runtime files are kept in two places:
 
 Use this checklist when preparing a new Windows user profile:
 
-- [ ] Install [AutoHotkey v2](https://www.autohotkey.com/)
+- [ ] Allow the installer to install [AutoHotkey v2](https://www.autohotkey.com/) through winget
 - [ ] Confirm [AutoHotkey v2 documentation](https://www.autohotkey.com/docs/v2/)
 - [ ] Allow the installer to provision the [BusyTag CLI](https://github.com/busy-tag/busytag-cli)
 - [ ] Review [BusyTag CLI releases](https://github.com/busy-tag/busytag-cli/releases)
-- [ ] Install the [.NET 8 runtime](https://dotnet.microsoft.com/download/dotnet/8.0)
+- [ ] Allow the installer to install the [.NET 8 runtime](https://dotnet.microsoft.com/download/dotnet/8.0) through winget
 - [ ] Confirm the [PowerShell documentation](https://learn.microsoft.com/powershell/)
 - [ ] Confirm the [Windows Task Scheduler PowerShell reference](https://learn.microsoft.com/powershell/module/scheduledtasks/)
 - [ ] Install the [Wispr Flow application](https://wisprflow.ai/)
