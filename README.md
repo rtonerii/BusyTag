@@ -65,12 +65,26 @@ The scheduled-task XML is generated in memory by `Install-BusyTagStartupTask.ps1
 
 ## Requirements
 
-- Windows PowerShell 5.1
+- Windows PowerShell 5.1 or PowerShell 7 (Core)
 - AutoHotkey v2
 - BusyTag connected on the configured serial port
 - .NET 8 runtime for the current BusyTag CLI package
 - Internet access during installation so the official BusyTag CLI package can be downloaded
 - A local copy of the configured dictation image
+
+### What the installer handles
+
+Good news: you do not need to manually download or place the BusyTag CLI. The installer downloads the official CLI package, validates it with the installed .NET 8 runtime, and keeps it in the current user's local application-data folder. It also creates or refreshes the `XferWorx\BusyTag-Automation` scheduled task and starts the user-local runtime from the project folder.
+
+The installer does not currently install Windows PowerShell, PowerShell Core, AutoHotkey, the .NET runtime, or Wispr Flow. Those are host/application prerequisites and must be installed or managed by the user's normal Windows software process. Windows PowerShell 5.1 is included with supported Windows versions and is the required baseline for the startup path.
+
+The scripts were syntax-checked and the read-only runtime diagnostic completed successfully under both Windows PowerShell 5.1 and PowerShell Core (tested with 7.6.5). During a full install, the installer records the executable that launched it. The scheduled and manual batch launchers and the AutoHotkey listener then use that selected host, so installing from PowerShell Core selects `pwsh.exe`, while installing from Windows PowerShell selects `powershell.exe`. PowerShell 4 is not the supported baseline for this project.
+
+Runtime files are kept in two places:
+
+- The project folder contains the scripts, configuration, and images.
+- The current user's local application-data folder contains the downloaded CLI, logs, status files, request flags, and other runtime state:
+  `%LOCALAPPDATA%\XferWorx\BusyTag-WisprFlow\`
 
 ## Dependency checklist and references
 

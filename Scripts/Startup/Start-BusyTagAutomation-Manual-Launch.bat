@@ -3,7 +3,10 @@ setlocal
 
 set "BUSYTAG_PROJECT_ROOT=%~dp0..\.."
 set "BUSYTAG_SETUP_SCRIPT=%BUSYTAG_PROJECT_ROOT%\Scripts\Setup\Initialize-BusyTagAutomation.ps1"
-set "BUSYTAG_POWERSHELL=%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
+set "BUSYTAG_HOST_FILE=%LOCALAPPDATA%\XferWorx\BusyTag-WisprFlow\Runtime\PowerShellHost.txt"
+set "BUSYTAG_POWERSHELL="
+if exist "%BUSYTAG_HOST_FILE%" set /p BUSYTAG_POWERSHELL=<"%BUSYTAG_HOST_FILE%"
+if not defined BUSYTAG_POWERSHELL set "BUSYTAG_POWERSHELL=%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
 
 if not exist "%BUSYTAG_SETUP_SCRIPT%" (
     echo ERROR: BusyTag setup script was not found:
@@ -13,7 +16,7 @@ if not exist "%BUSYTAG_SETUP_SCRIPT%" (
 )
 
 if not exist "%BUSYTAG_POWERSHELL%" (
-    echo ERROR: Windows PowerShell was not found:
+    echo ERROR: Selected PowerShell host was not found:
     echo %BUSYTAG_POWERSHELL%
     pause
     exit /b 1

@@ -28,6 +28,15 @@ $script:ScriptPath = $PSCommandPath
 $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $startupDirectory = Join-Path $projectRoot 'Scripts\Startup'
 $logDirectory = Join-Path $env:LOCALAPPDATA 'XferWorx\BusyTag-WisprFlow\Logs'
+$runtimeDirectory = Join-Path $env:LOCALAPPDATA 'XferWorx\BusyTag-WisprFlow\Runtime'
+$powerShellHostFile = Join-Path $runtimeDirectory 'PowerShellHost.txt'
+# 2026-08-20: Persist the host that performed installation so scheduled and
+# manual launches use the same PowerShell edition and executable.
+$powerShellHostPath = if ($PSVersionTable.PSEdition -eq 'Core') {
+    Join-Path $PSHOME 'pwsh.exe'
+} else {
+    Join-Path $PSHOME 'powershell.exe'
+}
 $cliInstallDirectory = Join-Path $env:LOCALAPPDATA 'XferWorx\BusyTag-WisprFlow\Runtime\BusyTag.CLI'
 $cliPath = Join-Path $cliInstallDirectory 'tools\net8.0\any\busytag-cli.dll'
 $cliVersion = '0.6.2'
@@ -53,6 +62,63 @@ function Write-BusyTagInstallLog {
     } catch {
         # Installation diagnostics must never prevent the actual install result.
     }
+}
+
+<#
+.SYNOPSIS
+    Verifies the host files required for a complete BusyTag installation.
+
+.DESCRIPTION
+    Checks the selected PowerShell executable, AutoHotkey v2, the project
+    listener, and the scheduled-start batch file before changing Task Scheduler.
+    The installer reports missing prerequisites clearly; it does not silently
+    download or install host applications.
+#>
+function Test-BusyTagInstallPrerequisites {
+    $autoHotkeyPath = Join-Path $env:ProgramFiles 'AutoHotkey\v2\AutoHotkey64.exe'
+    $requiredFiles = [ordered]@{
+        'Selected PowerShell host' = $powerShellHostPath
+        'AutoHotkey v2' = $autoHotkeyPath
+        'Runtime listener' = Join-Path $projectRoot 'Scripts\Runtime\BusyTag-WisprFlow.ahk'
+        'Scheduled startup launcher' = Join-Path $startupDirectory 'Start-BusyTagAutomation-Scheduled.bat'
+    }
+
+    $missing = @(
+        foreach ($entry in $requiredFiles.GetEnumerator()) {
+            if (-not (Test-Path -LiteralPath $entry.Value -PathType Leaf)) {
+                Write-BusyTagInstallLog "Missing prerequisite: $($entry.Key) at $($entry.Value)"
+                "$($entry.Key): $($entry.Value)"
+            }
+        }
+    )
+
+    if ($missing.Count -gt 0) {
+        throw "BusyTag installation prerequisites are missing:`n - $($missing -join "`n - ")"
+    }
+
+    Write-Host 'Installation prerequisites: present.' -ForegroundColor Green
+    Write-BusyTagInstallLog 'Installation prerequisites validated.'
+}
+
+<#
+.SYNOPSIS
+    Saves the selected PowerShell executable for future launches.
+
+.DESCRIPTION
+    The scheduled task and AutoHotkey listener are launched indirectly through
+    project-owned startup code. Persisting the installer host keeps those paths
+    aligned when installation is performed from Windows PowerShell 5.1 or
+    PowerShell Core.
+#>
+function Set-BusyTagPowerShellHost {
+    New-Item -ItemType Directory -Path $runtimeDirectory -Force | Out-Null
+    [System.IO.File]::WriteAllText(
+        $powerShellHostFile,
+        $powerShellHostPath,
+        [System.Text.UTF8Encoding]::new($false)
+    )
+    Write-Host "PowerShell host selected: $powerShellHostPath"
+    Write-BusyTagInstallLog "PowerShell host selected=$powerShellHostPath edition=$($PSVersionTable.PSEdition) version=$($PSVersionTable.PSVersion)"
 }
 
 <#
@@ -314,6 +380,8 @@ if ($Uninstall) {
                 throw 'Administrator PowerShell is required. Close this window, start PowerShell with Run as administrator, and run Install-BusyTagStartupTask.ps1 again.'
             }
 
+            Test-BusyTagInstallPrerequisites
+            Set-BusyTagPowerShellHost
             Install-BusyTagCli
             Install-BusyTagStartupTask
         }
